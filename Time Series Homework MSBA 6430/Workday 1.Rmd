@@ -1,0 +1,176 @@
+---
+#title: "Problem 1 (6 percent)"
+#subtitle: "Workday 1"
+#author: "William Wu, wuxx1066"
+#date: '`r format(Sys.Date(), "%B %d, %Y")`'
+#output: pdf_document
+---
+
+```{r}
+suppressPackageStartupMessages({
+  library(TSA)
+  library(ggplot2)
+  library(dplyr)
+  library(forecast)
+})
+```
+
+# Simulations
+
+## Question 1
+
+Please simulate one sample path of a white noise process of length $T=200$ and save it into a time series object
+
+* Please use name `e1` for the object that would contain the data
+
+**Hints**:
+
+1. **Always** specify a seed before generating random numbers. This way your results are reproducible!
+2. Use `ts` to convert a vector to a Time-Series
+
+```{r}
+set.seed(42)
+
+T <- 200L
+e1 = rnorm(T)
+WN <- ts(e1)
+# your white noise sample path should be called "e1"
+# I think I misunderstood which part is the sample path....
+# It's too late to change it
+
+```
+
+
+## Question 2
+
+Please plot the sample path $e_t$
+
+**Hints**:
+
+1. You can use `time(x)` to extract the time component of time series
+2. Use `geom_line` if you are using `ggplot`
+
+```{r}
+# please write your code below
+ts.plot(WN)
+
+#alternatively in ggplot, it's something like this
+ggplot(WN, aes(x= time(WN), WN)) + geom_line()
+
+
+# Instructor Version
+WN1 = data.frame(Y=e1, X=time(WN))
+p0 = ggplot(data=WN1, aes(x=X,y=Y))+geom_line(alpha=1)
+p1 = p0 + labs(x="Time", y= "White Noise")
+p1
+```
+
+## Question 3
+
+Please compute the mean and standard deviation of that process,
+add them as horizontal lines to the plot (red for the mean and blue for 2 standard deviations around the mean)
+
+**Hints**:
+
+* `geom_hline` function may be helpful
+
+```{r}
+# please write your code below
+WNmean = mean(WN)
+WNstd = sd(WN)
+ggplot(WN, aes(x= time(WN), WN)) + 
+  geom_line() + 
+  geom_hline(yintercept = WNmean, color = "red") + 
+  geom_hline(yintercept = WNmean + 2*WNstd, color = "blue") + 
+  geom_hline(yintercept = WNmean - 2*WNstd, color = "blue")
+
+```
+
+
+## Question 4
+
+Please generate a sample path from a random walk with the length of $T=200$ and plot it. 
+
+* Please use the variable name $Y4$ for the array that would contain the sample path.
+
+* Please **do not overwrite** variables created in the previous chunks (such as $e1$ that you created earlier)
+
+**Hints**:
+
+1. Try avoiding using loops. You don't really need a loop here.
+
+
+```{r}
+set.seed(42)
+
+T <- 200L
+
+# please write your code below
+Y4 = cumsum(WN)
+ts.plot(Y4)
+
+```
+
+
+## Question 5
+
+Please generate 50 sample paths from a random walk with the length of $T=200$ and plot all of them using different colors.
+
+* Please use the data.frame named `randwalk` that would contain all the sample paths in one long line called column Y. (That is, `randwalk$Y`)
+
+**Hints**:
+
+1. Use `dplyr` chains! Try avoiding using for-loops. 
+2. At this point, you should be using ggplot
+3. Create the data in the *long* format:
+    - I would prefer if you first generate one very long sequence of white noise first, put into a data.frame and then add columns for sample path id and time 
+
+```{r}
+set.seed(42)
+
+N <- 50L # 50 sample paths
+T <- 200L 
+
+# please write your code below
+data <- data.frame(
+  e5 = rnorm(T*N),
+  id=rep(1:N, each=T),
+  t=rep(1:T,N)
+) %>% as_tibble()
+
+RW5 = data %>% group_by(id) %>% mutate(Y=cumsum(e5))%>% select(Y,id,t)
+p5 = ggplot(data = RW5, aes(x=t, y=Y)) + geom_line(alpha = 0.5)
+p5
+
+```
+
+## Question 6
+
+Compute the mean function $E[Y_t]$ for every $t$ and add to your plot as well as the variance function $\mathrm{Var}[Y_t]$ for every $t$ and add (standard deviation) to your plot too
+
+**Hints**:
+
+1. Use `dplyr` chains! Try avoiding using for-loops. 
+2. Create a separate data.frame with means and standard deviations that will help with extra layers in ggplot
+3. At this point, you should be using ggplot
+
+```{r}
+# please write your code below
+summary = RW5 %>% 
+  group_by(t) %>%
+  select(Y) %>%
+  summarise(
+    E_Yt = mean(Y),
+    sd_Yt = sd(Y)
+  )
+
+p6 = p5 + geom_line(aes(x=t, y=E_Yt),data = summary, color = "red")
+p6 = p6 + geom_line(aes(x=t, y=E_Yt + 1.96*sd_Yt), data= summary, color="blue")
+p6 = p6 + geom_line(aes(x=t, y=E_Yt - 1.96*sd_Yt), data= summary, color="blue")
+p6
+```
+
+## Done!
+
+Congratulations!
+
