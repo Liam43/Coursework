@@ -1,0 +1,366 @@
+---
+title: "Homework 2"
+subtitle: "MSBA 6450"
+author: "William Wu (wuxx1066@umn.edu), Jingjing Olivia Liang (liang625@umn.edu)"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: pdf_document
+---
+```{r}
+library(lpSolve)
+```
+## Question 1 
+A	portfolio	manager	in	charge	of	a	bank	portfolio	has	$10	million	to	invest.	The	securities	available	for	purchase,	as	well	as	their	respective	quality	ratings,	maturities,	and	yields,	are	shown in Table 1.
+
+
+
+The	bank	places	the	following	policy	limitations	on	the	portfolio	manager's	actions:
+
+
+  1.	Government	and	agency	bonds	must	total	at	least	$4	million.		
+  
+  
+	2.	The	average	quality	of	the	portfolio	cannot	exceed	1.4	on	the	bank's	quality	scale.	(Note	that	a	low	number	on	this	scale	means	a	high-quality	bond.)	
+	
+	
+	3.	The	average	years	to	maturity	of	the	portfolio	must	not	exceed	5	years
+
+
+### (1)
+objective function (Maximization of after tax earnings):
+
+
+0.043a + 0.027b + 0.025c + 0.022d + 0.045e = After tax earnings
+
+
+Where the variables a,b,c,d, and e correspond with their respective bonds and is measured in millions.
+
+
+Constraints:
+
+
+a + b + c + d + e <= 10
+
+b + c + d >= 4
+
+(2a + 2b + c + d + 5e) <= 1.4(a + b + c + d + e)
+
+--> 
+
+0.6a + 0.6b -0.4c - 0.4d - 3.6e <= 0
+
+
+(9a + 15b + 4c + 3d + 2e) <= 5(a + b + c + d + e)
+
+-->
+
+4a + 10b - c - 2d - 3e <= 0
+
+
+a,b,c,d,e >= 0
+
+
+```{r}
+obj_fun1 <- c(0.043,0.027,0.025,0.022,0.045)
+constr_eq1 <- matrix(c(1,1,1,1,1,
+                      0,1,1,1,0,
+                      0.6,0.6,-0.4,-0.4,3.6,
+                      4,10,-1,-2,-3,
+                      1,0,0,0,0,
+                      0,1,0,0,0,
+                      0,0,1,0,0,
+                      0,0,0,1,0,
+                      0,0,0,0,1),nrow=9, byrow=TRUE)
+constr_dir1 <- c('<=', '>=', '<=', '<=', '>=', '>=', '>=', '>=', '>=')
+constr_rhs1 <- c(10,4,0,0,0,0,0,0,0)
+solution1 <- lp('max', obj_fun1,constr_eq1, constr_dir1, constr_rhs1)
+solution1$objval
+solution1$solution
+```
+A = 2.18 million
+B = 0
+C = 7.36 Million
+D = 0
+E = 0.45 Million
+
+
+
+### (2)
+The objective function:
+
+0.043a + 0.027b + 0.025c + 0.022d + 0.045e - 0.0275f = after tax earnings
+
+Where f is the amount borrowed in millions
+
+
+Constraints
+
+b + c + d >= 4
+
+(2a + 2b + c + d + 5e) <= 1.4(a + b + c + d + e)
+
+--> 
+
+0.6a + 0.6b -0.4c - 0.4d - 3.6e <= 0
+
+
+(9a + 15b + 4c + 3d + 2e) <= 5(a + b + c + d + e)
+
+-->
+
+4a + 10b - c - 2d - 3e <= 0
+
+a,b,c,d,e >= 0
+
+0 <= f <= 1
+
+
+```{r}
+obj_fun2 <- c(0.043,0.027,0.025,0.022,0.045,-0.0275)
+constr_eq2 <- matrix(c(1,1,1,1,1,-1,
+                      0,1,1,1,0,0,
+                      0.6,0.6,-0.4,-0.4,3.6,0,
+                      4,10,-1,-2,-3,0,
+                      1,0,0,0,0,0,
+                      0,1,0,0,0,0,
+                      0,0,1,0,0,0,
+                      0,0,0,1,0,0,
+                      0,0,0,0,1,0,
+                      0,0,0,0,0,1,
+                      0,0,0,0,0,1), nrow=11, byrow=TRUE)
+constr_dir2 <- c('<=', '>=', '<=', '<=', '>=', '>=', '>=', '>=', '>=', '>=','<=')
+constr_rhs2 <- c(10,4,0,0,0,0,0,0,0,0,1)
+solution2 <- lp('max', obj_fun2,constr_eq2, constr_dir2, constr_rhs2)
+solution2$objval
+solution2$solution
+```
+The ideal bond distribution then becomes
+
+A = 2.4 Million
+
+B = 0
+
+C = 8.1 Million
+
+D = 0
+
+E = 0.5 Million
+
+With 1 Million borrowed.
+
+
+
+### (3)
+Using the variables x, y, z, w for the dual problem, 
+The objective function would be to minimize:
+
+10x - 4y + 0z + 0w = uh..... I don't know what we're really minimizing, I have no finance background.
+
+
+Constraints:
+
+x + 0y+ 0.6z + 4w >= 0.043
+
+x - y + 0.6z + 10w >= 0.027
+
+x - y - 0.4z - w >= 0.025
+
+x - y - 0.4z - 2w >= 0.022 
+
+x - 0y + 3.6z -3w >= 0.045
+
+x, y, z, w >= 0
+
+
+```{r}
+obj_fun3 <- c(10, -4, 0, 0)
+constr_eq3 <- matrix(c(1,0,0.6,4,
+                       1,-1,0.6,10,
+                       1,-1,-0.4,-1,
+                       1,-1,-0.4,-2,
+                       1,0,3.6,-3,
+                       1,0,0,0,
+                       0,1,0,0,
+                       0,0,1,0,
+                       0,0,0,1), nrow=9, byrow=TRUE)
+constr_dir3 <- c('>=', '>=', '>=', '>=', '>=', '>=', '>=', '>=', '>=')
+constr_rhs3 <- c(0.043,0.027,0.025,0.022,0.045,0,0,0,0)
+solution3 <- lp('min', obj_fun3,constr_eq3, constr_dir3, constr_rhs3)
+solution3$objval
+solution3$solution
+```
+For dual problem, the optimal solution gives 0.298 million as the minimum of something.
+
+## Question 2
+
+The	manager	of a chemical	plant	wants	to minimize	the	total	cost of	producing	Chemical	X	of	the	months	of	January	through	June.	The	total	cost	includes	the	cost	of	raw	materials	and	storage	costs,	as	well	as	any	fixed	costs,	setup	costs,	and	shutdown	costs.		
+Table	2	provides	the	cost	of	raw	materials	needed	for	one	unit	of	the	final	product,	the	monthly	demand,	and	production	capacity	in	the	number of	units	of the	chemical.	Storage	costs	is	$2	for	each unit	stored at the	end	of	the	month.	Any	unit	produced	in	a	given	month	can	be used to	cover	the	demand	of	the	same	month,	or	be	stored	to	cover	the	demand	of	months	to	come.		
+	
+At the beginning of month 1 there is a stock of 50 units of the chemical, and there is a minimum stock requirement of at least 30 units at the end of each month.
+	
+
+## Question 3
+Consider a national	firm that receives checks from all over the	United	States.	Due	to	the	delays	in	the	postal	service,	there	is	a	variable	delay	from	when	the	check	is	postmarked	(and	hence	the	customer	has	met	her	obligation)	and	when	the	check	clears	(and	when	the	firm	can	use	the	money).	For	instance,	a	check	mailed	in	Chicago	sent	to	a	Chicago	address	might	clear	in	just	two	days.	A	similar	check	sent	to	Los	Angeles	might	take	eight	days	to	clear.	The	firm's	wants	to	have	the	check	clear	as	quickly	as	possible	so	that	it	can	use	the	money.	In	order	to	speed	up	this	clearing,	the	firm	wants	to	open	offices	(called	lockboxes)	in	different	cities	to	handle	the	checks.	
+
+
+Suppose	that	the	firm	receives	payments	from	four	regions	of	the	US	market	(West,	Midwest,	East,	and	South).	Each	of	these	four	regions	will	be	assigned	to	exactly	one	lockbox	location.	The	average	daily	value	from	each	region	is	as	follows:
+	
+	
+70,000	from	the	West,	50,000	from	the	Midwest,	60,000	from	the	East,	and	40,000	from	the	South.	The	firm	can	invest	this	money	at	a	20%	rate	of	return.	(Hint:	Calculate	the	losses	the	company	faces	when region i customer has to send checks to lockbox location j.)
+
+
+The	firm	is	considering	opening	lockbox	locations	in	Los	Angeles,	Chicago,	New	York,	and/or	Atlanta.	Operating	a	lockbox	costs	$50,000	per	year.	The	average	number	of	days	it	takes	checks	from	mailing	to	clearing	is	given	in	the	Table	3.	Which	lockboxes	should	be	opened?
+
+
+
+Assign West, Midwest, East and South as regions 1, 2, 3, and 4 respectively. 
+
+Likewise, assign LA, Chicago, New York, and Atlanta to cities 1, 2, 3, and 4 respectively.
+
+i,j = 1,2,3,4, where i designates region, and j designates city.
+
+
+Set x_ij and y_j as binary variables where:
+
+x_ij = 1 if checks from regions i are sent to city j, = 0 if otherwise
+ 
+
+y_j = 1 if a lockbox is in city j, = 0 if otherwise
+
+
+Ojective function:
+
+Minimize the lockbox and postal services total cost.
+
+
+0.2[70(2x_11 + 6x_12 + 8x_13 + 8x_14) +
+
+50(6x_21 + 2x_22 + 5x_23 + 5x_24) +
+
+60(8x_31 + 5x_32 + 2x_33 + 5x_34) +
+
+40(8x_41 + 5x_42 + 5x_43 + 2x_44)] +
+
+50(y_1 + y_2 + y_3 + y_4) 
+
+
+-->
+
+
+28x_11 + 84x_12 + 112x_13 + 112x_14 +
+
+60x_21 + 20x_22 + 50x_23 + 50x_24+
+
+96x_31 + 60x_32 + 24x_33 + 60x_34 + 
+
+64x_41 + 40x_42 + 40x_43 + 16x_44 +
+
+50y_1 + 50y_2 + 50y_3 + 50y_4 = Minimum cost
+
+
+
+Constraints:
+
+These constraints ensure that only one optimal value is chosen for which city should send the checks.
+
+x_11 + x_12 + x_13 + x_14 = 1
+
+x_21 + x_22 + x_23 + x_24 = 1
+
+x_31 + x_32 + x_33 + x_34 = 1
+
+x_41 + x_42 + x_43 + x_44 = 1
+
+
+These constraints follow the previous one and ensures that only 1 or 0 lockboxes receives the check.
+
+x_11 <= y_1 
+
+x_21 <= y_1
+
+x_31 <= y_1
+
+x_41 <= y_1
+
+x_12 <= y_2
+
+x_22 <= y_2
+
+x_32 <= y_2
+
+x_42 <= y_2  
+
+x_13 <= y_3  
+
+x_23 <= y_3  
+
+x_33 <= y_3  
+
+x_43 <= y_3  
+
+x_14 <= y_4  
+
+x_24 <= y_4  
+
+x_34 <= y_4  
+
+x_44 <= y_4
+
+
+```{r}
+obj_fun <- c(28,84,112,112,60,20,50,50,96,60,24,60,64,40,40,16,50,50,50,50)
+
+constr_eq <- matrix(c(1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                      0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,
+                      0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,
+                      0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,
+                      
+                      1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,
+                      0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,
+                      0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,-1,0,0,0,
+                      0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,-1,0,0,0,
+                      
+                      0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,
+                      0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,
+                      0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,-1,0,0,
+                      0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,-1,0,0,
+                      
+                      0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,
+                      0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,-1,0,
+                      0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,-1,0,
+                      0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,-1,0,
+                      
+                      0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,
+                      0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,-1,
+                      0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,-1,
+                      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,-1), nrow=20, byrow=TRUE)
+constr_dir <- c('=', '=', '=', '=', '<=','<=','<=','<=','<=','<=','<=', '<=', '<=', '<=', '<=', '<=', 
+                '<=','<=','<=','<=')
+constr_rhs <- c(1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+solution <- lp('min', obj_fun,constr_eq, constr_dir, constr_rhs,all.bin=TRUE)
+solution$objval
+solution$solution
+```
+You can interpret this answer in groups of 4.
+
+1, 0, 0, 0,
+
+0, 0, 1, 0,
+
+0, 0, 1, 0,
+
+0, 0, 1, 0,
+
+1, 0, 1, 0
+
+Where the first 4 rows tell what city the checks from the corresponding row should be sent to.
+
+Western (1) checks should be sent to LA.
+
+Midwest (2), East(3), and Southern(4) checks should be sent to New York.
+
+The 5th row is where the lockboxes should be.
+
+LA(1) and New York(3) are ideal locations for lockboxes.
+
+The total cost would be 242 million.
+

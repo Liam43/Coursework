@@ -1,0 +1,126 @@
+---
+title: "Homework 3"
+subtitle: "MSBA 6450"
+author: "William Wu (wuxx1066@umn.edu), Jingjing Olivia Liang (liang625@umn.edu)"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: pdf_document
+---
+
+# Problem 1
+Simulate	10,000	random	samples	from	the	distribution	with	the	following	CDF	starting	with	
+numbers	generated	from	a	uniform	distribution	U[0	,1]
+
+```{r}
+set.seed(124345)
+NSim=10^4
+U=runif(NSim)
+Z=(-log(1-U))^(0.5)  # The Inverse transformation of the F(x) function
+
+#Validation
+set.seed(124345)
+Y=rweibull(2000,shape=2,scale=1)
+plot(density(Z),	 xlim	 =c(0,3),	 ylim =	 c(0,1),	 main	 =	 "From Uniform",	
+xlab=NA)
+par(mfrow=c(1,1))
+plot(density(Y),	 xlim	 =c(0,3),	 ylim =	 c(0,1),	 main	 =	 "From Weibull",	
+xlab=NA)
+
+
+#Alternate View
+plot(density(Z),	 xlim	 =c(0,3),	 ylim =	 c(0,1),	 main	 =	 "",	
+xlab=NA)
+par(new=TRUE)
+plot(density(Y),	 xlim	 =c(0,3),	 ylim =	 c(0,1),	 main	 =	 "",	
+xlab=NA)
+```
+
+
+# Problem 2: General Transformation 
+```{r}
+set.seed(123456)
+NSim=3*10^4
+U=runif(NSim)
+U=matrix(data=U, nrow=3)
+X=-log(U) #uniform to exponential
+X=1/5*apply(X,2,sum) #sum up to get chisquares
+
+#Validation
+set.seed(123456)
+Y=rgamma(10000, 3, 5)
+plot(density(X),	 xlim	 =c(0,3),	 ylim =	 c(0,1),	 main	 =	 "From Uniform",	
+xlab=NA)
+par(mfrow=c(1,1))
+plot(density(Y),	 xlim	 =c(0,3),	 ylim =	 c(0,1),	 main	 =	 "From Gamma",	
+xlab=NA)
+
+
+#Alternate View
+plot(density(X),	 xlim	 =c(0,3),	 ylim =	 c(0,1),	 main	 =	 "",	
+xlab=NA)
+par(new=TRUE)
+plot(density(Y),	 xlim	 =c(0,3),	 ylim =	 c(0,1),	 main	 =	 "",	
+xlab=NA)
+```
+
+
+# Problem 3: Accept Reject Method
+```{r}
+set.seed(123456)
+u<-runif(10000, 0, 2)
+y<-runif(10000, 0, 1)
+x<-u[y<(3/10)*(-u^2+2*u+1)]
+hist(x, breaks = 100)
+plot(density(x))
+
+```
+
+
+# Problem 4: Bayesian Data Analysis
+
+
+```{r}
+# Data = 15 out of 50, beta prior
+# Data = 25 our of 75, beta prior
+set.seed(123456)
+#Priors
+n_draw <- 10000
+prior_rate1 <- rbeta(n_draw,2,5)
+
+
+gen_model1 <- function(rate) {
+  subscribers <- rbinom(1, size = 50, prob = rate)
+  subscribers
+}
+subscribers1 <- rep(NA, n_draw)
+for(i in 1:n_draw) {
+  subscribers1[i] <- gen_model1(prior_rate1[i])
+}
+
+post_rate1 <- prior_rate1[subscribers1 == 15]
+hist(post_rate1)
+
+
+#Chaining Updates in Beliefs. Yesterday's post is today's prior
+
+prior_rate2 <- post_rate1
+
+
+gen_model2 <- function(rate) {
+  subscribers <- rbinom(1, size = 75, prob = rate)
+  subscribers
+}
+subscribers2 <- rep(NA, length(prior_rate2))
+for(i in 1:length(prior_rate2)) {
+  subscribers2[i] <- gen_model2(prior_rate2[i])
+}
+
+
+post_rate2 <- prior_rate2[subscribers2 == 25] 
+
+
+hist(post_rate2)
+
+
+quantile(post_rate2, c(0.025, 0.975))
+quantile(post_rate1, c(0.025, 0.975))
+```

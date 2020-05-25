@@ -1,0 +1,180 @@
+---
+title: "Homework 1"
+subtitle: "MSBA 6450"
+author: "William Wu (wuxx1066@umn.edu), Jingjing Olivia Liang (liang625@umn.edu)"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: pdf_document
+---
+
+```{r}
+#install.packages("lpSolve")
+library(lpSolve)
+```
+# Problem 1
+
+A	manufacturing	 firm	in	California,	Calmetal,	produces four different	metal	products,	each of which	must be	machined,	polished, and	 assembled. The specific time requirements	(in hours) for each product	are	as follows:
+
+The firm has available to it on a weekly basis 480 hours of machine time, 400 hours of polishing time, and 400 hours of assembly time. The unit profits on the products are $6, $4, $6, and $8, respectively. The firm has a contract with a distributor to provide 50 units of product I and 100 units of any combination of products II and III each week. Through other customers, the firm can sell each week as many units of products I, II, and III as it can produce, but only a maximum of 30 units of product IV. Moreover, local Government regulations mandate that at most 25 units of product IV can be produced weekly. How many units of each product should the firm manufacture each week to meet all contractual and regulatory obligations while maximizing its total profit? Assume that any unfinished pieces can be completed the following week (i.e., integer values of units is not required). What is the maximum profit?
+
+
+Machining
+3a + 2b + 2c + 4d <= 480
+Polishing:
+a + b + 2c + 3d <= 400
+Assembling:
+2a + b + 2c + d <= 400
+
+Where Product I = a, Product II = b, etc.
+
+Additional Constraints:
+Distribute 50 units of Product I
+a >= 50
+100 units of any combo of II and III
+b + c >= 100
+Government mandates no more than 25 units (overrides the 30 unit constraint)
+d <= 25
+
+Objective Function:
+6a + 4b + 6c + 8d = Total Profit
+
+```{r}
+obj_fun <- c(6,4,6,8)
+constr_eq <- matrix(c(3,2,2,4,
+                      1,1,2,3,
+                      2,1,2,1,
+                      1,0,0,0,
+                      0,1,1,0,
+                      0,0,0,1), ncol = 4, byrow=TRUE)
+constr_dir <- c("<=","<=","<=",">=",">=","<=")
+constr_rhs <- c(480, 400, 400, 50, 100, 25)
+solution <- lp("max", obj_fun, constr_eq, constr_dir, constr_rhs)
+
+solution$objval
+solution$solution
+```
+The firm should create 50 of Product A, 0 of Product B, 145 of Product C, and 10 of Product D
+The total profit is $1250.
+
+
+
+# Problem 2
+The	manager of a supermarket meat	department finds she has 200lb of	round	steak, 800 lb	
+of chuck	steak, and	150lb of pork in stock on Saturday morning, which	she	will use	to make	
+hamburger	meat,	picnic patties,	and	meat loaf. The demand	for	each of these items	always
+exceeds	the	supermarket's	supply.	Hamburger	meat must	be at least 20%	ground round and	
+50%	ground chuck (by weight);	picnic patties must	be at	least	20%	ground pork	and	50%	
+ground chuck;	and	meat loaf	must be at least 10% ground round, 30% ground pork, and	
+40%	ground chuck.	The	remainder	of each	product	is an	inexpensive	nonmeat filler which	
+the	store	has	in unlimited supply. How many	pounds of	each product should	be made if the	
+manager	desires to minimize	the	amount of	meat that	must be	stored in the	supermarket	
+over Sunday? How much	meat needs to	be stored over Sunday?
+
+Round Steak
+0.2a + 0.1c <= 200
+Chuck Steak
+0.5a + 0.5b + 0.4c <= 800
+Pork
+0.2b + 0.3c <= 150
+
+Where Hamburger = a, Picnic Patties = b, and Meat Loaf = c
+
+Objective Function
+a+b+c= Total Pounds of Meat
+
+Because the demand exceeds the supply, all the meat will be sold.
+To minimize the amount of meat stored, we need to maximize the amount of meat products created.
+By maximizing the amount of meat products created, we will also maximize profits as a byproduct.
+Assuming: You can sell a half pound of meat. No integers are necesarry. I can totally buy half a pound of hamburger from a local butcher.
+
+```{r}
+obj_fun <- c(1,1,1)
+constr_eq <- matrix(c(0.2, 0.0, 0.1,
+                      0.5, 0.5, 0.4,
+                      0.0, 0.2, 0.3), ncol = 3, byrow=TRUE)
+constr_dir <- c("<=","<=","<=")
+constr_rhs <- c(200, 800, 150)
+solution <- lp("max", obj_fun, constr_eq, constr_dir, constr_rhs)
+
+solution$objval
+solution$solution
+
+```
+
+Based on the solution, we create 1625 total pounds of meat products. 937.5 lbs Hamburger, 562.5 lbs Picnic Patties, and 125 lbs Meat Loaf.
+Plugging these values back into the original meat equations gives the amount of each meat left over.
+The total amount of meat stored over Sunday is as follows.
+
+```{r}
+#Round Steak
+#Since a hamburger is 20% Round Steak, and a Meatloaf is 10%, using the following equation calculates the amount of round steak left over
+200 - (927.5*0.2 + 0.1*125)
+
+#Repeat for the other meats
+#Chuck Steak
+800 - (927.5*0.5 + 562.5*0.5 + 125*0.4)
+
+#Pork
+150 - (562.5*0.2 + 125*0.3)
+
+```
+
+With this distribution, there is a total of 2lbs of Round Steak and 5lbs of Chuck Steak, for a total of 7lbs remaining.
+The constraining resource is pork, since there isn't a product that only uses Round and Chuck, likely cannot use any more.
+
+However, since the recipes for each of the meat products calls for "at least" x% of meat, you could theoretically replace some of the filler meat in any of the products with the leftover meats to completely use it all. In this product mix, there is at least 400 lbs of filler.
+
+
+# Problem 3
+The Aztec Refining Company of Texas produces two types of unleaded gasoline, regular and premium, which it sells to its chain of service stations around the state for $12 and $14 per barrel, respectively. Both types are blended from Aztec's inventory of refined domestic oil and refined foreign oil, and must meet the following specifications:
+
+The company wants to decide what quantities (i.e., blended barrels) of the oils should it blend into the two gasolines in order to maximize weekly profit? What is the maximum weekly profit?
+
+
+Assumption:
+Both Vapor Pressure and Octane Ratings are calculated by taking the average
+Quick googling seems to support this suggestion
+
+Question Outline
+a = Regular
+b = Premium
+c = Domestic
+d = Foreign
+
+Vapor Pressure and Octane Ratings Constraints
+23a + 23b - 25c - 15d >= 0
+88a + 93b - 87c - 98d >= 0
+
+Capacity Constraints
+a >= 50000
+b >= 5000
+c <= 40000
+d <= 60000
+a <= 100000
+b <= 20000
+
+```{r}
+
+obj_fun <- c(12,14,-8,-15)
+constr_eq <- matrix(c(23,23,-25,-15,
+                      88,93,-87,-98,
+                      1,0,0,0,
+                      0,1,0,0,
+                      0,0,1,0,
+                      0,0,0,1,
+                      1,0,0,0,
+                      0,1,0,0), ncol = 4, byrow = TRUE)
+constr_dir <- c('>=', '<=', '>=','>=', '<=','<=','<=','<=')
+constr_rhs <- c(0, 0, 50000,5000, 40000,60000,100000,20000)
+
+solution <- lp('max', obj_fun, constr_eq, constr_dir, constr_rhs)
+solution$objval
+solution$solution
+
+
+```
+
+Conclusion: The company should blend 40,000 bbl Domestic oil and 14132.65 bbl foreign oil into the two gasolines to maximize weekly profit. The maximum weekly profit is $138010.20.
+
+
+
+
