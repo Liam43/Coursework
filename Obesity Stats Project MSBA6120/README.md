@@ -1,1 +1,1 @@
-# obesity-stats-project-MSBA6120
+# Obesity Stats Project
